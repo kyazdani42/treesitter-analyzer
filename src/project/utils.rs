@@ -4,7 +4,7 @@ use std::fs;
 
 use tree_sitter::{Language, LanguageError, Parser, Tree};
 
-use super::{Node, ProjectFile};
+use super::ProjectFile;
 
 type FnameToProjectFile = HashMap<String, ProjectFile>;
 
@@ -75,11 +75,4 @@ pub fn get_language(language: &str) -> Option<Language> {
         "lua" => Some(unsafe { tree_sitter_lua() }),
         _ => None,
     }
-}
-
-pub fn iter_tree(tree: &Tree) -> Vec<Node> {
-    let mut nodes = vec![];
-
-
-    return nodes;
 }
