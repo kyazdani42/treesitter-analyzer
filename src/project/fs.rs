@@ -30,5 +30,3 @@ fn iterate_entries(entries: &mut Vec<String>, extensions: &[&str], cwd: String) 
         }
     }
 }
-
-

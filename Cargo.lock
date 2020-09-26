@@ -751,6 +751,7 @@ dependencies = [
  "cc",
  "jsonrpc-tcp-server",
  "tree-sitter",
+ "xdg",
 ]
 
 [[package]]
@@ -817,3 +818,9 @@ dependencies = [
  "winapi 0.2.8",
  "winapi-build",
 ]
+
+[[package]]
+name = "xdg"
+version = "2.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d089681aa106a86fade1b0128fb5daf07d5867a509ab036d99988dec80429a57"

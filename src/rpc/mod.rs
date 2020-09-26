@@ -27,9 +27,27 @@ impl Rpc {
     }
 
     fn method_navigation_definition(&mut self) {
+        let projects = self.projects.clone();
         self.io
-            .add_method("navigation/definition", |_params: Params| {
-                Ok(Value::String("navigation/definition/success".to_string()))
+            .add_method("navigation/definition", move |params: Params| {
+                let params = params.parse::<HashMap<String, String>>().unwrap();
+                let language = params.get("language").unwrap();
+                let node_name = params.get("node_name").unwrap();
+                let definition = projects
+                    .lock()
+                    .unwrap()
+                    .get(language)
+                    .unwrap()
+                    .get_definition(node_name);
+                if let Some(definition) = definition {
+                    let result = format!(
+                        "{{\"start_byte\":\"{}\",\"end_byte\":\"{}\",\"file_name\":\"{}\"}}",
+                        definition.start_byte, definition.end_byte, definition.file_name
+                    );
+                    Ok(Value::String(result))
+                } else {
+                    Ok(Value::String("navigation/definition/error".to_string()))
+                }
             });
     }
 

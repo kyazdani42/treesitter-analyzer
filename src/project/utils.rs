@@ -26,3 +26,11 @@ pub fn get_language(language: &str) -> Option<Language> {
         _ => None,
     }
 }
+
+pub fn get_query_file(language: &str) -> String {
+    let base_dirs = xdg::BaseDirectories::new().unwrap();
+    let data_home = base_dirs.get_data_home();
+    let xdg_folder = data_home.to_str().unwrap();
+    let query_file = format!("{}/treesitter-lsp/queries/{}.scm", xdg_folder, language);
+    std::fs::read_to_string(&query_file).unwrap().to_string()
+}

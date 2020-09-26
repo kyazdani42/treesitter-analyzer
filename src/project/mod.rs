@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use tree_sitter::{Parser, Query, QueryCursor, Tree};
 
-mod utils;
 mod fs;
+mod utils;
 
-pub use utils::*;
 pub use fs::*;
+pub use utils::*;
 
 pub struct Project {
     language: String,
@@ -14,10 +14,11 @@ pub struct Project {
     matches: Vec<Match>,
 }
 
+#[derive(Clone)]
 pub struct Match {
-    start_byte: usize,
-    end_byte: usize,
-    file_name: String,
+    pub start_byte: usize,
+    pub end_byte: usize,
+    pub file_name: String,
     node_name: String,
     query_name: String,
 }
@@ -25,37 +26,12 @@ pub struct Match {
 impl Project {
     pub fn new(lang: &str) -> Self {
         let ts_language = get_language(lang).unwrap();
-        let files = create_project_files(lang);
-        let query_src = std::fs::read_to_string(&format!(
-            "/home/kiyan/.local/share/treesitter-lsp/queries/{}.scm",
-            lang
-        ))
-        .unwrap()
-        .to_string();
+        let query_src = get_query_file(lang);
         let query = Query::new(ts_language, &query_src).unwrap();
-        let mut matches = vec![];
-        for (filename, project) in &files {
-            let mut query_cursor = QueryCursor::new();
-            let query_matches = query_cursor.matches(&query, project.tree.root_node(), |_| []);
-            let file_content = std::fs::read_to_string(&filename).unwrap().to_owned();
-            let query_names = query.capture_names();
-            query_matches.for_each(|e| {
-                let query_name = &query_names[e.pattern_index];
-                e.captures.iter().for_each(|capture| {
-                    let start_byte = capture.node.start_byte();
-                    let end_byte = capture.node.end_byte();
-                    let node_name: String =
-                        file_content.clone().drain(start_byte..end_byte).collect();
-                    matches.push(Match {
-                        file_name: filename.to_owned(),
-                        query_name: query_name.clone(),
-                        node_name,
-                        start_byte,
-                        end_byte,
-                    });
-                });
-            })
-        }
+
+        let files = create_project_files(lang);
+        let matches = get_matches(&files, &query);
+
         Self {
             language: lang.to_owned(),
             query,
@@ -63,6 +39,57 @@ impl Project {
             matches,
         }
     }
+
+    pub fn get_definition(&self, name: &str) -> Option<Match> {
+        let matches: Vec<&Match> = self
+            .matches
+            .iter()
+            .filter(|m| m.node_name == name)
+            .collect();
+
+        let def = matches
+            .iter()
+            .find(|m| m.query_name == "definition.exported");
+        if let Some(def) = def {
+            return Some((*def).clone());
+        }
+
+        let def = matches.iter().find(|m| m.query_name == "definition.scoped");
+        if let Some(def) = def {
+            Some((*def).clone())
+        } else {
+            None
+        }
+    }
+}
+
+fn get_matches(files: &HashMap<String, ProjectFile>, query: &Query) -> Vec<Match> {
+    let mut matches = vec![];
+
+    for (filename, project) in files {
+        let mut query_cursor = QueryCursor::new();
+        let file_content = std::fs::read_to_string(filename).unwrap().to_owned();
+        let query_names = query.capture_names();
+
+        let query_matches = query_cursor.matches(query, project.tree.root_node(), |_| []);
+        query_matches.for_each(|e| {
+            let query_name = &query_names[e.pattern_index];
+            e.captures.iter().for_each(|capture| {
+                let start_byte = capture.node.start_byte();
+                let end_byte = capture.node.end_byte();
+                let node_name: String = file_content.clone().drain(start_byte..end_byte).collect();
+                matches.push(Match {
+                    file_name: filename.to_owned(),
+                    query_name: query_name.clone(),
+                    node_name,
+                    start_byte,
+                    end_byte,
+                });
+            });
+        });
+    }
+
+    matches
 }
 
 fn create_project_files(lang: &str) -> HashMap<String, ProjectFile> {
