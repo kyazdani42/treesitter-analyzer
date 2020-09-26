@@ -1,34 +1,42 @@
-use tree_sitter::{Language, LanguageError, Parser};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
-mod rpc;
+use jsonrpc_tcp_server::jsonrpc_core::*;
+use jsonrpc_tcp_server::*;
+
+mod project;
+use project::Project;
 
 fn main() {
-    let file = std::path::Path::new("/home/kiyan/dev/other/treesitter-lsp/src/main.rs");
-    let extension = file.extension().unwrap().to_str().unwrap();
-    let file = std::fs::read_to_string(file).unwrap();
+    let mut io = IoHandler::default();
+    let projects: Arc<Mutex<HashMap<String, Project>>> = Arc::new(Mutex::new(HashMap::new()));
 
-    let language = extension_to_language(extension).unwrap();
-    let mut parser = get_parser(language).unwrap();
+    let rc_clone = projects.clone();
+    io.add_method("setup", move |params: Params| {
+        let params = params.parse::<HashMap<String, String>>().unwrap();
+        let language = params.get("language").unwrap();
 
-    let tree = parser.parse(&file, None).unwrap();
-    println!("{}", tree.walk().node().is_named());
+        if rc_clone.lock().unwrap().iter().any(|(v, _)| v == language) {
+            return Ok(Value::String("setup/canceled".to_string()))
+        }
 
-    rpc::run_server();
-}
+        let new_project = Project::new(language);
 
-pub fn get_parser(language: Language) -> Result<Parser, LanguageError> {
-    let mut parser = Parser::new();
-    parser.set_language(language)?;
-    Ok(parser)
-}
+        rc_clone
+            .lock()
+            .unwrap()
+            .insert(language.to_string(), new_project);
 
-extern "C" {
-    fn tree_sitter_rust() -> Language;
-}
+        Ok(Value::String("setup/success".to_string()))
+    });
 
-pub fn extension_to_language(extension: &str) -> Option<Language> {
-    match extension {
-        "rs" => Some(unsafe { tree_sitter_rust() }),
-        _ => None,
-    }
+    io.add_method("navigation/definition", |_params: Params| {
+        Ok(Value::String("navigation/definition/success".to_string()))
+    });
+
+    let server = ServerBuilder::new(io)
+        .start(&"0.0.0.0:7542".parse().unwrap())
+        .expect("tcp server could not run at localhost:7542");
+
+    server.wait()
 }
