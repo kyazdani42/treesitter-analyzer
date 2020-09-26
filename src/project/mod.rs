@@ -9,7 +9,7 @@ pub struct Project {
     language: String,
     query: Query,
     files: HashMap<String, ProjectFile>,
-    matches: Vec<Match>
+    matches: Vec<Match>,
 }
 
 pub struct Match {
@@ -17,16 +17,19 @@ pub struct Match {
     end_byte: usize,
     file_name: String,
     node_name: String,
-    query_name: String
+    query_name: String,
 }
 
 impl Project {
     pub fn new(lang: &str) -> Self {
         let ts_language = get_language(lang).unwrap();
         let files = create_project_files(lang);
-        let query_src = std::fs::read_to_string(&format!("/home/kiyan/.local/share/treesitter-lsp/queries/{}.scm", lang))
-            .unwrap()
-            .to_string();
+        let query_src = std::fs::read_to_string(&format!(
+            "/home/kiyan/.local/share/treesitter-lsp/queries/{}.scm",
+            lang
+        ))
+        .unwrap()
+        .to_string();
         let query = Query::new(ts_language, &query_src).unwrap();
         let mut matches = vec![];
         for (filename, project) in &files {
@@ -39,10 +42,8 @@ impl Project {
                 e.captures.iter().for_each(|capture| {
                     let start_byte = capture.node.start_byte();
                     let end_byte = capture.node.end_byte();
-                    let node_name: String = file_content
-                        .clone()
-                        .drain(start_byte..end_byte)
-                        .collect();
+                    let node_name: String =
+                        file_content.clone().drain(start_byte..end_byte).collect();
                     matches.push(Match {
                         file_name: filename.to_owned(),
                         query_name: query_name.clone(),
@@ -57,7 +58,7 @@ impl Project {
             language: lang.to_owned(),
             query,
             files,
-            matches
+            matches,
         }
     }
 }

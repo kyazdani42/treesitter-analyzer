@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 
-use tree_sitter::{Language, LanguageError, Parser, Tree};
+use tree_sitter::{Language, LanguageError, Parser};
 
 use super::ProjectFile;
 
@@ -11,7 +11,7 @@ type FnameToProjectFile = HashMap<String, ProjectFile>;
 pub fn create_project_files(lang: &str) -> FnameToProjectFile {
     let extensions = get_extensions(lang).unwrap();
     let entries = get_cwd_entries(&extensions);
-    let mut files: FnameToProjectFile = HashMap::new();
+    let mut files = HashMap::new();
 
     for file in entries {
         files.insert(file.to_owned(), ProjectFile::new(lang, &file));

@@ -17,7 +17,7 @@ fn main() {
         let language = params.get("language").unwrap();
 
         if rc_clone.lock().unwrap().iter().any(|(v, _)| v == language) {
-            return Ok(Value::String("setup/canceled".to_string()))
+            return Ok(Value::String("setup/canceled".to_string()));
         }
 
         let new_project = Project::new(language);
