@@ -2,8 +2,10 @@ use std::collections::HashMap;
 use tree_sitter::{Parser, Query, QueryCursor, Tree};
 
 mod utils;
+mod fs;
 
 pub use utils::*;
+pub use fs::*;
 
 pub struct Project {
     language: String,
@@ -61,6 +63,18 @@ impl Project {
             matches,
         }
     }
+}
+
+fn create_project_files(lang: &str) -> HashMap<String, ProjectFile> {
+    let extensions = get_extensions(lang).unwrap();
+    let entries = get_cwd_entries(&extensions);
+    let mut files = HashMap::new();
+
+    for file in entries {
+        files.insert(file.to_owned(), ProjectFile::new(lang, &file));
+    }
+
+    files
 }
 
 pub struct ProjectFile {
