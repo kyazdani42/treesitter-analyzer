@@ -71,20 +71,24 @@ fn get_matches(files: &HashMap<String, ProjectFile>, query: &Query) -> Vec<Match
         let file_content = std::fs::read_to_string(filename).unwrap().to_owned();
         let query_names = query.capture_names();
 
+        // Dont know what the third argument is for here.
         let query_matches = query_cursor.matches(query, project.tree.root_node(), |_| []);
         query_matches.for_each(|e| {
+            // FIXME: this is not right, it seems to get the query type (@something)
+            // we need to get the start byte and match on the pattern which seems 
+            // quite strange...
+            let pattern_start = query.start_byte_for_pattern(e.pattern_index);
             let query_name = &query_names[e.pattern_index];
-            e.captures.iter().for_each(|capture| {
-                let start_byte = capture.node.start_byte();
-                let end_byte = capture.node.end_byte();
-                let node_name: String = file_content.clone().drain(start_byte..end_byte).collect();
-                matches.push(Match {
-                    file_name: filename.to_owned(),
-                    query_name: query_name.clone(),
-                    node_name,
-                    start_byte,
-                    end_byte,
-                });
+            let capture = e.captures[0];
+            let start_byte = capture.node.start_byte();
+            let end_byte = capture.node.end_byte();
+            let node_name: String = file_content.clone().drain(start_byte..end_byte).collect();
+            matches.push(Match {
+                file_name: filename.to_owned(),
+                query_name: query_name.clone(),
+                node_name,
+                start_byte,
+                end_byte,
             });
         });
     }

@@ -41,7 +41,7 @@ impl Rpc {
                     .get_definition(node_name);
                 if let Some(definition) = definition {
                     let result = format!(
-                        "{{\"start_byte\":\"{}\",\"end_byte\":\"{}\",\"file_name\":\"{}\"}}",
+                        r#"{{"start_byte":"{}","end_byte":"{}","file_name":"{}"}}"#,
                         definition.start_byte, definition.end_byte, definition.file_name
                     );
                     Ok(Value::String(result))

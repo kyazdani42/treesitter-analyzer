@@ -26,12 +26,6 @@ local function req(opts)
 end
 
 req {
-  method = "navigation/definition",
-  params = '{ "node": { "name": "test", "position": [1, 2] }}',
-  on_rcv = function(data) print(data) end
-}
-
-req {
   method = 'setup',
   params = '{ "language": "rust" }',
   on_rcv = function(data) print(data) end
@@ -42,3 +36,11 @@ req {
   params = '{ "language": "lua" }',
   on_rcv = function(data) print(data) end
 }
+
+req {
+  method = "navigation/definition",
+  params = '{ "language": "rust", "node_name": "Project" }',
+  on_rcv = function(data) print(data) end
+}
+
+

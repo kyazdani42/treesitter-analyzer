@@ -8,3 +8,10 @@
 (function_item
 	(visibility_modifier)
     name: (identifier) @definition.exported)
+
+(struct_item
+	(visibility_modifier)
+	name: (type_identifier) @definition.exported)
+
+(struct_item
+	name: (type_identifier) @definition.scoped)
