@@ -36,16 +36,16 @@ end
 
 req {
   method = 'setup',
-  params = '{ "language": "rust" }',
+  params = join_table { language = "rust" },
   on_rcv = function(data) print(data) end
 }
 
--- req {
---   method = 'setup',
---   params = '{ "language": "lua" }',
---   on_rcv = function(data) print(data) end
--- }
---
+req {
+  method = 'setup',
+  params = join_table { language = "lua" },
+  on_rcv = function(data) print(data) end
+}
+
 req {
   method = "navigation/definition",
   params = join_table {
