@@ -1,5 +1,7 @@
 use tree_sitter::{Language, LanguageError, Parser};
 
+use crate::fs::get_file_content;
+
 pub fn get_extensions(lang: &str) -> Option<Vec<&str>> {
     match lang {
         "rust" => Some(vec!["rs"]),
@@ -32,5 +34,5 @@ pub fn get_query_file(language: &str) -> String {
     let data_home = base_dirs.get_data_home();
     let xdg_folder = data_home.to_str().unwrap();
     let query_file = format!("{}/treesitter-lsp/queries/{}.scm", xdg_folder, language);
-    std::fs::read_to_string(&query_file).unwrap().to_string()
+    get_file_content(&query_file)
 }

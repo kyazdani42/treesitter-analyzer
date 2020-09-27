@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use jsonrpc_tcp_server::jsonrpc_core::*;
 use jsonrpc_tcp_server::*;
 
+use super::fs::get_language_from_file;
 use super::Project;
 
 pub type ProjectsRef = Arc<Mutex<HashMap<String, Project>>>;
@@ -31,18 +32,23 @@ impl Rpc {
         self.io
             .add_method("navigation/definition", move |params: Params| {
                 let params = params.parse::<HashMap<String, String>>().unwrap();
-                let language = params.get("language").unwrap();
-                let node_name = params.get("node_name").unwrap();
+                let file = params.get("file").unwrap();
+                let row = params.get("row").unwrap().parse::<usize>().unwrap();
+                let column = params.get("column").unwrap().parse::<usize>().unwrap();
+                let language = get_language_from_file(file).unwrap();
                 let definition = projects
                     .lock()
                     .unwrap()
-                    .get(language)
+                    .get(&language)
                     .unwrap()
-                    .get_definition(node_name);
+                    .get_definition(file, row, column);
+
                 if let Some(definition) = definition {
                     let result = format!(
-                        r#"{{"start_byte":"{}","end_byte":"{}","file_name":"{}"}}"#,
-                        definition.start_byte, definition.end_byte, definition.file_name
+                        r#"{{"row":"{}","col":"{}","file":"{}"}}"#,
+                        definition.start_position.row,
+                        definition.start_position.column,
+                        definition.file_name
                     );
                     Ok(Value::String(result))
                 } else {

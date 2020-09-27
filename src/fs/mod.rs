@@ -1,6 +1,19 @@
 use std::env;
 use std::fs;
 
+pub fn get_file_content(file: &str) -> String {
+    fs::read_to_string(file).unwrap().to_string()
+}
+
+pub fn get_language_from_file(file: &str) -> Option<String> {
+    let extension = std::path::Path::new(file).extension()?.to_str()?;
+    match extension {
+        "rs" => Some("rust".to_string()),
+        "lua" => Some("lua".to_string()),
+        _ => None
+    }
+}
+
 pub fn get_cwd_entries(extensions: &[&str]) -> Vec<String> {
     let cwd = env::current_dir().unwrap();
     let cwd = cwd.to_str().unwrap().to_owned();

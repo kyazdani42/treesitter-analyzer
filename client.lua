@@ -25,22 +25,33 @@ local function req(opts)
   luv.run()
 end
 
+local function join_table(t)
+  local str = "{"
+  for k, v in pairs(t) do
+    str = string.format('%s"%s":"%s",', str, k, v)
+  end
+
+  return str:sub(0, -2).."}"
+end
+
 req {
   method = 'setup',
   params = '{ "language": "rust" }',
   on_rcv = function(data) print(data) end
 }
 
-req {
-  method = 'setup',
-  params = '{ "language": "lua" }',
-  on_rcv = function(data) print(data) end
-}
-
+-- req {
+--   method = 'setup',
+--   params = '{ "language": "lua" }',
+--   on_rcv = function(data) print(data) end
+-- }
+--
 req {
   method = "navigation/definition",
-  params = '{ "language": "rust", "node_name": "Project" }',
+  params = join_table {
+    file = "/home/kiyan/dev/other/treesitter-lsp/src/rpc/mod.rs",
+    row = "8",
+    column = "15",
+  },
   on_rcv = function(data) print(data) end
 }
-
-
