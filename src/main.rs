@@ -1,5 +1,5 @@
-mod project;
-use project::Project;
+mod analyzer;
+use analyzer::Analyzer;
 
 mod rpc;
 use rpc::Rpc;

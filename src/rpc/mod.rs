@@ -5,13 +5,13 @@ use jsonrpc_tcp_server::jsonrpc_core::*;
 use jsonrpc_tcp_server::*;
 
 use super::fs::get_language_from_file;
-use super::Project;
+use super::Analyzer;
 
-pub type ProjectsRef = Arc<Mutex<HashMap<String, Project>>>;
+pub type Projects = Arc<Mutex<HashMap<String, Analyzer>>>;
 
 pub struct Rpc {
     io: IoHandler,
-    projects: ProjectsRef,
+    projects: Projects,
 }
 
 impl Rpc {
@@ -67,7 +67,7 @@ impl Rpc {
                 return Ok(Value::String("setup/canceled".to_string()));
             }
 
-            let new_project = Project::new(language);
+            let new_project = Analyzer::new(language);
 
             projects
                 .lock()

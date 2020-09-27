@@ -7,7 +7,7 @@ pub use utils::*;
 
 use super::fs::{get_cwd_entries,get_file_content};
 
-pub struct Project {
+pub struct Analyzer {
     language: String,
     query: Query,
     files: HashMap<String, ProjectFile>,
@@ -23,7 +23,7 @@ pub struct Match {
     query_name: String,
 }
 
-impl Project {
+impl Analyzer {
     pub fn new(lang: &str) -> Self {
         let ts_language = get_language(lang).unwrap();
         let query_src = get_query_file(lang);
