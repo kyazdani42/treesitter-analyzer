@@ -33,7 +33,7 @@ pub fn get_query_file(language: &str) -> String {
     let base_dirs = xdg::BaseDirectories::new().unwrap();
     let data_home = base_dirs.get_data_home();
     let xdg_folder = data_home.to_str().unwrap();
-    let query_file = format!("{}/treesitter-lsp/queries/{}.scm", xdg_folder, language);
+    let query_file = format!("{}/treesitter-analyzer/queries/{}.scm", xdg_folder, language);
     get_file_content(&query_file)
 }
 
