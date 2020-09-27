@@ -27,6 +27,9 @@ impl Rpc {
         self.method_navigation_definition();
     }
 
+    // row : is 0 based
+    // column : is 0 based
+    // file : absolute path
     fn method_navigation_definition(&mut self) {
         let projects = self.projects.clone();
         self.io

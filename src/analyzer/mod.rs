@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use tree_sitter::{Parser, Point, Query, QueryCursor, Tree};
+use tree_sitter::{Node, Parser, Point, Query, QueryCursor, Tree};
 
 mod utils;
 
 pub use utils::*;
 
-use super::fs::{get_cwd_entries,get_file_content};
+use super::fs::{get_cwd_entries, get_file_content};
 
 pub struct Analyzer {
     language: String,
@@ -41,24 +41,15 @@ impl Analyzer {
         }
     }
 
+    fn find_smallest_node_at_point(&self, file: &str, row: usize, column: usize) -> Node {
+        let current_file = self.files.get(file).unwrap();
+        let root_node = current_file.tree.root_node();
+        smallest_node_at_point(root_node, row, column)
+    }
+
     pub fn get_definition(&self, file: &str, row: usize, column: usize) -> Option<Match> {
-        let cursor_match: Vec<&Match> = self
-            .matches
-            .iter()
-            .filter(|m| {
-                let row_included = m.start_position.row <= row && row <= m.end_position.row;
-                let col_included =
-                    m.start_position.column <= column && column <= m.start_position.column;
-                m.file_name == file && row_included && col_included
-            })
-            .collect();
-
-        println!("{}", cursor_match.len());
-        if cursor_match.len() == 0 {
-            return None;
-        }
-
-        let node_name = cursor_match[0].node_name.to_owned();
+        let current_node = self.find_smallest_node_at_point(file, row, column);
+        let node_name = get_node_name(&current_node, &get_file_content(file));
 
         let matches: Vec<&Match> = self
             .matches
@@ -109,7 +100,7 @@ fn get_capture_names(query: &Query, query_src: String) -> Vec<String> {
 fn get_matches(
     files: &HashMap<String, ProjectFile>,
     query: &Query,
-    query_names: Vec<String>
+    query_names: Vec<String>,
 ) -> Vec<Match> {
     let mut matches = vec![];
 
@@ -122,9 +113,7 @@ fn get_matches(
         query_matches.for_each(|e| {
             let query_name = &query_names[e.pattern_index];
             let capture = e.captures[0];
-            let start_byte = capture.node.start_byte();
-            let end_byte = capture.node.end_byte();
-            let node_name: String = file_content.clone().drain(start_byte..end_byte).collect();
+            let node_name = get_node_name(&capture.node, &file_content);
             matches.push(Match {
                 node_name,
                 file_name: filename.to_owned(),
@@ -136,6 +125,15 @@ fn get_matches(
     }
 
     matches
+}
+
+fn get_node_name(node: &Node, file_content: &str) -> String {
+    let start_byte = node.start_byte();
+    let end_byte = node.end_byte();
+    file_content
+        .to_owned()
+        .drain(start_byte..end_byte)
+        .collect()
 }
 
 fn create_project_files(lang: &str) -> HashMap<String, ProjectFile> {

@@ -1,4 +1,4 @@
-use tree_sitter::{Language, LanguageError, Parser};
+use tree_sitter::{Language, LanguageError, Node, Parser};
 
 use crate::fs::get_file_content;
 
@@ -35,4 +35,28 @@ pub fn get_query_file(language: &str) -> String {
     let xdg_folder = data_home.to_str().unwrap();
     let query_file = format!("{}/treesitter-lsp/queries/{}.scm", xdg_folder, language);
     get_file_content(&query_file)
+}
+
+pub fn smallest_node_at_point(node: Node, row: usize, column: usize) -> Node {
+    let mut cursor = node.walk();
+    let mut next_child = node;
+
+    loop {
+        if next_child.named_child_count() == 0 {
+            break;
+        }
+        for child in next_child.named_children(&mut cursor) {
+            let start_pos = child.start_position();
+            let end_pos = child.end_position();
+            if start_pos.row == row && end_pos.row == row {
+                if start_pos.column <= column && column <= end_pos.column {
+                    next_child = child;
+                }
+            } else if start_pos.row <= row && row <= end_pos.row {
+                next_child = child;
+            }
+        }
+    }
+
+    next_child
 }

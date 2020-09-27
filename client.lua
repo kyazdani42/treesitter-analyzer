@@ -49,8 +49,8 @@ req {
 req {
   method = "navigation/definition",
   params = join_table {
-    file = "/home/kiyan/dev/other/treesitter-lsp/src/rpc/mod.rs",
-    row = "8",
+    file = "/home/kiyan/dev/other/treesitter-analyzer/src/rpc/mod.rs",
+    row = "7",
     column = "15",
   },
   on_rcv = function(data) print(data) end
