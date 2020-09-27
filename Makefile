@@ -2,6 +2,7 @@ TARGET="treesitter-analyzer"
 DATA="${HOME}/.local/share/treesitter-analyzer"
 
 all:
+	@ cd scripts && bash dl_parsers.sh
 	@ cargo build --release
 
 install:
