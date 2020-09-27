@@ -1,4 +1,4 @@
-# Treesitter based Language Server Protocol tools
+# Treesitter based project analyzing tool
 
 ## Notice
 
