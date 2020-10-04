@@ -6,6 +6,7 @@ repositories=(
 for url in ${repositories[@]}; do
     git clone --depth=1 --branch=master "$url"
     folder=$(basename "$url")
+    rm -rf "../parsers/$folder"
     mv $folder "../parsers/"
 done
 

@@ -5,13 +5,13 @@ mod utils;
 
 pub use utils::*;
 
-use super::language_tools::{LanguageTools, get_language_tools};
+use super::language_tools::{get_language_tools, LanguageTools};
 
 pub struct Analyzer {
     language: String,
     query: Query,
     files: HashMap<String, (Parser, Tree)>,
-    matches: Vec<Match>
+    matches: Vec<Match>,
 }
 
 #[derive(Clone)]
@@ -46,8 +46,9 @@ impl Analyzer {
         smallest_node_at_point(tree.root_node(), row, column)
     }
 
-    pub fn get_definition(&self, file: &str, row: usize, column: usize) -> Option<Match> {
+    pub fn get_definition(&self, file: &str, row: usize, column: usize) -> Option<&Match> {
         let current_node = self.find_smallest_node_at_point(file, row, column);
+        println!("{:?}", current_node);
         let node_name = get_node_name(&current_node, &get_file_content(file));
 
         let matches: Vec<&Match> = self
@@ -60,15 +61,22 @@ impl Analyzer {
             .iter()
             .find(|m| m.query_name == "definition.exported");
         if let Some(def) = def {
-            return Some((*def).clone());
+            return Some(def);
         }
 
         let def = matches.iter().find(|m| m.query_name == "definition.scoped");
         if let Some(def) = def {
-            Some((*def).clone())
+            Some(def)
         } else {
             None
         }
+    }
+
+    pub fn update_file_tree(&mut self, file: &str) {
+        // TODO: update matches(definitions) for this file
+        let (fname, (mut parser, tree)) = self.files.remove_entry(file).unwrap();
+        let new_tree = parser.parse(get_file_content(file), Some(&tree)).unwrap();
+        self.files.insert(fname, (parser, new_tree));
     }
 }
 
@@ -129,10 +137,8 @@ fn get_matches(
 fn get_node_name(node: &Node, file_content: &str) -> String {
     let start_byte = node.start_byte();
     let end_byte = node.end_byte();
-    file_content
-        .to_owned()
-        .drain(start_byte..end_byte)
-        .collect()
+    let as_byte = file_content.as_bytes();
+    std::str::from_utf8(&as_byte[start_byte..end_byte]).unwrap().to_string()
 }
 
 fn get_files_parsers(lang: &str) -> HashMap<String, (Parser, Tree)> {

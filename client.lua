@@ -7,8 +7,8 @@ local function req(opts)
       client:shutdown()
     end
 
-    client:read_start(function(err, chunk)
-      if not err and chunk then
+    client:read_start(function(_err, chunk)
+      if not _err and chunk then
         opts.on_rcv(chunk)
       else
         client:close()
@@ -39,7 +39,7 @@ req {
   params = join_table {
     file = "/home/kiyan/dev/other/treesitter-analyzer/src/rpc/mod.rs",
     row = "7",
-    column = "15",
+    column = "26",
   },
   on_rcv = function(data) print(data) end
 }

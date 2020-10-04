@@ -21,6 +21,7 @@ impl Rpc {
 
     pub fn setup(&mut self) {
         self.method_navigation_definition();
+        self.method_update_tree();
     }
 
     // row : is 0 based
@@ -36,7 +37,8 @@ impl Rpc {
                 let row = params.get("row").unwrap().parse::<usize>().unwrap();
                 let column = params.get("column").unwrap().parse::<usize>().unwrap();
 
-                let definition = analyzer.lock().unwrap().get_definition(file, row, column);
+                let analyzer = analyzer.lock().unwrap();
+                let definition = analyzer.get_definition(file, row, column);
 
                 if let Some(definition) = definition {
                     let result = format!(
@@ -49,6 +51,19 @@ impl Rpc {
                 } else {
                     Ok(Value::String("navigation/definition/error".to_string()))
                 }
+            });
+    }
+
+    fn method_update_tree(&mut self) {
+        let analyzer = self.analyzer.clone();
+        self.io
+            .add_method("analyzer/update", move |params: Params| {
+                let params = params.parse::<HashMap<String, String>>().unwrap();
+
+                let file = params.get("file").unwrap();
+                analyzer.lock().unwrap().update_file_tree(file);
+
+                Ok(Value::String("update ok".to_string()))
             });
     }
 

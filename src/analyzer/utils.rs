@@ -1,4 +1,4 @@
-use tree_sitter::{Language, LanguageError, Node, Parser};
+use tree_sitter::{Language, LanguageError, Node, Parser, Point};
 
 pub fn get_parser(language: Language) -> Result<Parser, LanguageError> {
     let mut parser = Parser::new();
@@ -27,6 +27,7 @@ pub fn get_query_file(language: &str) -> String {
     get_file_content(&query_file)
 }
 
+// TODO: find why node.descendant* don't work ...
 pub fn smallest_node_at_point(node: Node, row: usize, column: usize) -> Node {
     let mut cursor = node.walk();
     let mut next_child = node;
