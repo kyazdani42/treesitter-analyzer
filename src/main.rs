@@ -1,13 +1,12 @@
 mod analyzer;
-use analyzer::Analyzer;
 
 mod rpc;
 use rpc::Rpc;
 
-mod fs;
+mod language_tools;
 
 fn main() {
-    let mut rpc = Rpc::new();
+    let mut rpc = Rpc::new("rust");
     rpc.setup();
     rpc.run();
 }

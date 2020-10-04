@@ -4,26 +4,22 @@ use std::sync::{Arc, Mutex};
 use jsonrpc_tcp_server::jsonrpc_core::*;
 use jsonrpc_tcp_server::*;
 
-use super::fs::get_language_from_file;
-use super::Analyzer;
-
-pub type Projects = Arc<Mutex<HashMap<String, Analyzer>>>;
+use super::analyzer::Analyzer;
 
 pub struct Rpc {
     io: IoHandler,
-    projects: Projects,
+    analyzer: Arc<Mutex<Analyzer>>,
 }
 
 impl Rpc {
-    pub fn new() -> Self {
+    pub fn new(language: &str) -> Self {
         Self {
             io: IoHandler::default(),
-            projects: Arc::new(Mutex::new(HashMap::new())),
+            analyzer: Arc::new(Mutex::new(Analyzer::new(language))),
         }
     }
 
     pub fn setup(&mut self) {
-        self.method_setup();
         self.method_navigation_definition();
     }
 
@@ -31,20 +27,16 @@ impl Rpc {
     // column : is 0 based
     // file : absolute path
     fn method_navigation_definition(&mut self) {
-        let projects = self.projects.clone();
+        let analyzer = Arc::clone(&self.analyzer);
         self.io
             .add_method("navigation/definition", move |params: Params| {
                 let params = params.parse::<HashMap<String, String>>().unwrap();
+
                 let file = params.get("file").unwrap();
                 let row = params.get("row").unwrap().parse::<usize>().unwrap();
                 let column = params.get("column").unwrap().parse::<usize>().unwrap();
-                let language = get_language_from_file(file).unwrap();
-                let definition = projects
-                    .lock()
-                    .unwrap()
-                    .get(&language)
-                    .unwrap()
-                    .get_definition(file, row, column);
+
+                let definition = analyzer.lock().unwrap().get_definition(file, row, column);
 
                 if let Some(definition) = definition {
                     let result = format!(
@@ -58,27 +50,6 @@ impl Rpc {
                     Ok(Value::String("navigation/definition/error".to_string()))
                 }
             });
-    }
-
-    fn method_setup(&mut self) {
-        let projects = self.projects.clone();
-        self.io.add_method("setup", move |params: Params| {
-            let params = params.parse::<HashMap<String, String>>().unwrap();
-            let language = params.get("language").unwrap();
-
-            if projects.lock().unwrap().iter().any(|(v, _)| v == language) {
-                return Ok(Value::String("setup/canceled".to_string()));
-            }
-
-            let new_project = Analyzer::new(language);
-
-            projects
-                .lock()
-                .unwrap()
-                .insert(language.to_string(), new_project);
-
-            Ok(Value::String("setup/success".to_string()))
-        });
     }
 
     pub fn run(&mut self) {

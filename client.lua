@@ -35,18 +35,6 @@ local function join_table(t)
 end
 
 req {
-  method = 'setup',
-  params = join_table { language = "rust" },
-  on_rcv = function(data) print(data) end
-}
-
-req {
-  method = 'setup',
-  params = join_table { language = "lua" },
-  on_rcv = function(data) print(data) end
-}
-
-req {
   method = "navigation/definition",
   params = join_table {
     file = "/home/kiyan/dev/other/treesitter-analyzer/src/rpc/mod.rs",

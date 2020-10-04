@@ -5,13 +5,13 @@ mod utils;
 
 pub use utils::*;
 
-use super::fs::{get_cwd_entries, get_file_content};
+use super::language_tools::{LanguageTools, get_language_tools};
 
 pub struct Analyzer {
     language: String,
     query: Query,
-    files: HashMap<String, ProjectFile>,
-    matches: Vec<Match>,
+    files: HashMap<String, (Parser, Tree)>,
+    matches: Vec<Match>
 }
 
 #[derive(Clone)]
@@ -30,7 +30,7 @@ impl Analyzer {
         let query = Query::new(ts_language, &query_src).unwrap();
         let capture_names = get_capture_names(&query, query_src);
 
-        let files = create_project_files(lang);
+        let files = get_files_parsers(lang);
         let matches = get_matches(&files, &query, capture_names);
 
         Self {
@@ -42,9 +42,8 @@ impl Analyzer {
     }
 
     fn find_smallest_node_at_point(&self, file: &str, row: usize, column: usize) -> Node {
-        let current_file = self.files.get(file).unwrap();
-        let root_node = current_file.tree.root_node();
-        smallest_node_at_point(root_node, row, column)
+        let (_, tree) = self.files.get(file).unwrap();
+        smallest_node_at_point(tree.root_node(), row, column)
     }
 
     pub fn get_definition(&self, file: &str, row: usize, column: usize) -> Option<Match> {
@@ -98,18 +97,18 @@ fn get_capture_names(query: &Query, query_src: String) -> Vec<String> {
 }
 
 fn get_matches(
-    files: &HashMap<String, ProjectFile>,
+    files: &HashMap<String, (Parser, Tree)>,
     query: &Query,
     query_names: Vec<String>,
 ) -> Vec<Match> {
     let mut matches = vec![];
 
-    for (filename, project) in files {
+    for (filename, (_, tree)) in files {
         let mut query_cursor = QueryCursor::new();
         let file_content = std::fs::read_to_string(filename).unwrap().to_owned();
 
         // Dont know what the third argument is for here.
-        let query_matches = query_cursor.matches(query, project.tree.root_node(), |_| []);
+        let query_matches = query_cursor.matches(query, tree.root_node(), |_| []);
         query_matches.for_each(|e| {
             let query_name = &query_names[e.pattern_index];
             let capture = e.captures[0];
@@ -136,28 +135,17 @@ fn get_node_name(node: &Node, file_content: &str) -> String {
         .collect()
 }
 
-fn create_project_files(lang: &str) -> HashMap<String, ProjectFile> {
-    let extensions = get_extensions(lang).unwrap();
-    let entries = get_cwd_entries(&extensions);
+fn get_files_parsers(lang: &str) -> HashMap<String, (Parser, Tree)> {
+    let tool = get_language_tools(lang).unwrap();
+    let entries = tool.get_files();
     let mut files = HashMap::new();
 
     for file in entries {
-        files.insert(file.to_owned(), ProjectFile::new(lang, &file));
+        let mut parser = get_parser(get_language(lang).unwrap()).unwrap();
+        let file_content = get_file_content(&file);
+        let tree = parser.parse(file_content, None).unwrap();
+        files.insert(file.to_owned(), (parser, tree));
     }
 
     files
-}
-
-pub struct ProjectFile {
-    parser: Parser,
-    pub tree: Tree,
-}
-
-impl ProjectFile {
-    pub fn new(lang: &str, file: &str) -> Self {
-        let mut parser = get_parser(get_language(lang).unwrap()).unwrap();
-        let file_content = get_file_content(file);
-        let tree = parser.parse(file_content, None).unwrap();
-        Self { tree, parser }
-    }
 }

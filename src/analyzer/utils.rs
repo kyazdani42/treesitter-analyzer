@@ -1,15 +1,5 @@
 use tree_sitter::{Language, LanguageError, Node, Parser};
 
-use crate::fs::get_file_content;
-
-pub fn get_extensions(lang: &str) -> Option<Vec<&str>> {
-    match lang {
-        "rust" => Some(vec!["rs"]),
-        "lua" => Some(vec!["lua"]),
-        _ => None,
-    }
-}
-
 pub fn get_parser(language: Language) -> Result<Parser, LanguageError> {
     let mut parser = Parser::new();
     parser.set_language(language)?;
@@ -59,4 +49,8 @@ pub fn smallest_node_at_point(node: Node, row: usize, column: usize) -> Node {
     }
 
     next_child
+}
+
+pub fn get_file_content(file: &str) -> String {
+    std::fs::read_to_string(file).unwrap().to_string()
 }
